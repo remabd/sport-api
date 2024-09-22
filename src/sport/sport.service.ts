@@ -11,10 +11,14 @@ export class SportService {
     private sportRepository: Repository<Sport>,
   ) {}
 
-  async create(name: string) {
-    const newSport: SportDto = {
+  async create(sport : SportDto) {
+    const isExisting = await this.sportRepository.findOneBy({name : sport.name})
+    if (isExisting) {
+      throw new Error("Sport already exist")
+    }
+    const newSport = {
       id: v4(),
-      name: name,
+      ...sport
     };
     return await this.sportRepository.save(newSport);
   }
@@ -24,17 +28,32 @@ export class SportService {
   }
 
   async findOne(id: string): Promise<Sport> {
-    return await this.sportRepository.findOneBy({ id: id });
+    const sport = await this.sportRepository.findOneBy({ id: id });
+    if(!sport) {
+      throw new Error("Sport not found")
+    }
+    return sport
   }
 
   async update(id: string, name: string) {
     const sportToUpdate = await this.sportRepository.findOneBy({ id: id });
+    if(!sportToUpdate) {
+      throw new Error("Sport not found")
+    }
+    const doesNameExist = await this.sportRepository.findOneBy({name : name});
+    if(doesNameExist && sportToUpdate.id !== doesNameExist.id) {
+      throw new Error("Sport already exist")
+    }
     sportToUpdate.name = name;
-    return await this.sportRepository.save(sportToUpdate);
+    await this.sportRepository.save(sportToUpdate);
+    return {...sportToUpdate, name : name}
   }
 
   async remove(id: string) {
     const sportToDelete = await this.sportRepository.findOneBy({ id: id });
+    if (!sportToDelete) {
+      throw new Error("Sport not found")
+    }
     return await this.sportRepository.remove(sportToDelete);
   }
 }

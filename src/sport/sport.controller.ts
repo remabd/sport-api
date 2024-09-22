@@ -16,7 +16,7 @@ export class SportController {
 
   @Post()
   create(@Body() body: SportDto) {
-    return this.sportService.create(body.name);
+    return this.sportService.create(body);
   }
 
   @Get()
