@@ -34,6 +34,10 @@ describe('SportService', () => {
     	controller = module.get<SportController>(SportController);
   	});
 
+	afterEach(() => {
+		jest.clearAllMocks();
+	});
+
   	describe('Scenario : is well defined', () => {
     	it('should be defined', () => {
       	expect(service).toBeDefined();
@@ -86,6 +90,7 @@ describe('SportService', () => {
 			mockSportRepository.save.mockResolvedValue(sport);
 			
 			const result = await service.create(sportDto);
+			console.log("result : ", result);
 			expect(result).toEqual(sport);
 			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({name : "Karate"});
 			expect(mockSportRepository.save).toHaveBeenCalledWith(expect.objectContaining({
@@ -116,12 +121,14 @@ describe('SportService', () => {
 
 			const result = await service.update(oldSport.id, newName);
 			expect(result).toEqual(updatedSport);
-			console.log("result :", result)
 			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({id: "1234-5678-9012-3456"});
 			// expect(mockSportRepository.update).toHaveBeenCalledWith(oldSport.id, expect.objectContaining({
 			// 	name : "Iaido"
 			// }));
-			expect(mockSportRepository.save).toHaveBeenCalledWith(oldSport.id, expect.objectContaining({ name: "Iaido" }));
+			expect(mockSportRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+				id: "1234-5678-9012-3456",
+				name: "Iaido"
+			}));
 			expect(mockSportRepository.findOneBy).toHaveBeenCalledTimes(2);
 		})
 
@@ -130,6 +137,26 @@ describe('SportService', () => {
 
 			await expect(service.findOne("999")).rejects.toThrow('Sport not found');
 			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({ id: "999" })
+		})
+	})
+
+	describe("Scenario : Remove a sport", () => {
+		it("Should remove a sport", async () => {
+			const sport = {id : "1234-5678-9012-3456", name : "Kendo"};
+			mockSportRepository.findOneBy.mockResolvedValue({id: sport.id});
+			mockSportRepository.remove.mockResolvedValue(sport);
+
+			const result = await service.remove(sport.id);
+			expect(result).toEqual(sport);
+			expect(mockSportRepository.remove).toHaveBeenCalledWith({id: sport.id});
+			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({id: sport.id});
+		})
+
+		it("Should fail to remove a sport", async () => {
+			mockSportRepository.findOneBy = jest.fn().mockResolvedValue(null);
+
+			await expect(service.findOne("999")).rejects.toThrow("Sport not found");
+			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({id: "999"})
 		})
 	})
 });
