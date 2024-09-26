@@ -5,8 +5,8 @@ import { DatabaseModule } from 'src/database/database.module';
 import { sportProviders } from './sport.providers';
 
 @Module({
-  imports: [DatabaseModule],
-  controllers: [SportController],
-  providers: [SportService, ...sportProviders],
+    imports: [DatabaseModule],
+    controllers: [SportController],
+    providers: [SportService, ...sportProviders],
 })
 export class SportModule {}

@@ -1,3 +1,4 @@
 export class SportDto {
-  name: string;
+    id: string;
+    name: string;
 }

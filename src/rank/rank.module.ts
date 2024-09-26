@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { RankService } from './rank.service';
 import { RankController } from './rank.controller';
 import { DatabaseModule } from 'src/database/database.module';
 import { rankProviders } from './rank.providers';
@@ -10,16 +9,15 @@ import { UpdateRank } from './use-cases/rank.update';
 import { RemoveRank } from './use-cases/rank.remove';
 
 @Module({
-  imports: [DatabaseModule],
-  controllers: [RankController],
-  providers: [
-    RankService,
-    CreateRank,
-    FindARank,
-    FindAllRanks,
-    UpdateRank,
-    RemoveRank,
-    ...rankProviders,
-  ],
+    imports: [DatabaseModule],
+    controllers: [RankController],
+    providers: [
+        CreateRank,
+        FindARank,
+        FindAllRanks,
+        UpdateRank,
+        RemoveRank,
+        ...rankProviders,
+    ],
 })
 export class RankModule {}

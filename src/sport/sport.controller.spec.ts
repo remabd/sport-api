@@ -3,160 +3,188 @@ import { SportService } from './sport.service';
 import { SportController } from './sport.controller';
 
 jest.mock('uuid', () => ({
-	v4: jest.fn(() => '1234-5678-9012-3456')
+    v4: jest.fn(() => '1234-5678-9012-3456'),
 }));
 
 describe('SportService', () => {
-  	let service: SportService;
-  	let controller: SportController;
+    let service: SportService;
+    let controller: SportController;
 
-	const mockSportRepository = {
-		save: jest.fn(),
-		find: jest.fn(),
-		findOneBy: jest.fn(),
-		update: jest.fn(),
-		remove: jest.fn(),
-	};
+    const mockSportRepository = {
+        save: jest.fn(),
+        find: jest.fn(),
+        findOneBy: jest.fn(),
+        update: jest.fn(),
+        remove: jest.fn(),
+    };
 
+    beforeEach(async () => {
+        const module: TestingModule = await Test.createTestingModule({
+            controllers: [SportController],
+            providers: [
+                SportService,
+                {
+                    provide: 'SPORT_REPOSITORY',
+                    useValue: mockSportRepository,
+                },
+            ],
+        }).compile();
 
-  	beforeEach(async () => {
-    	const module: TestingModule = await Test.createTestingModule({
-    	  	controllers: [SportController],
-    	  	providers: [SportService, 
-				{
-					provide: "SPORT_REPOSITORY",
-					useValue: mockSportRepository,
-				}
-			],
-    	}).compile();
+        service = module.get<SportService>(SportService);
+        controller = module.get<SportController>(SportController);
+    });
 
-    	service = module.get<SportService>(SportService);
-    	controller = module.get<SportController>(SportController);
-  	});
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
 
-	afterEach(() => {
-		jest.clearAllMocks();
-	});
+    describe('Scenario : is well defined', () => {
+        it('should be defined', () => {
+            expect(service).toBeDefined();
+        });
+    });
 
-  	describe('Scenario : is well defined', () => {
-    	it('should be defined', () => {
-      	expect(service).toBeDefined();
-    	});
-  	});
+    describe('Scenario : find all sports', () => {
+        it('Should return an array of sports', async () => {
+            const sports = [
+                { id: '1', name: 'Kendo' },
+                { id: '2', name: 'Iaido' },
+            ];
+            mockSportRepository.find.mockResolvedValue(sports);
 
-  	describe('Scenario : find all sports', () => {
-		it("Should return an array of sports", async () => {
-			const sports  = [{id : "1", name : "Kendo"}, {id : "2", name : "Iaido"}];
-			mockSportRepository.find.mockResolvedValue(sports);
+            const result = await service.findAll();
+            expect(result).toEqual(sports);
+            expect(mockSportRepository.find).toHaveBeenCalled();
+        });
 
-			const result = await service.findAll();
-			expect(result).toEqual(sports);
-			expect(mockSportRepository.find).toHaveBeenCalled();
-		});
+        it('Should return empty if no sports', async () => {
+            const sports = [];
+            mockSportRepository.find.mockResolvedValue(sports);
 
-		it("Should return empty if no sports", async () => {
-			const sports = [];
-			mockSportRepository.find.mockResolvedValue(sports);
+            const result = await service.findAll();
+            expect(result).toEqual(sports);
+            expect(mockSportRepository.find).toHaveBeenCalled();
+        });
+    });
 
-			const result = await service.findAll();
-			expect(result).toEqual(sports);
-			expect(mockSportRepository.find).toHaveBeenCalled();
-		});
-	});
+    describe('Scenario : find One sport', () => {
+        it('should throw an error if sport not found', async () => {
+            mockSportRepository.findOneBy = jest.fn().mockResolvedValue(null);
 
-	describe("Scenario : find One sport", () => {
-		it('should throw an error if sport not found', async () => {
-			mockSportRepository.findOneBy = jest.fn().mockResolvedValue(null);
+            await expect(service.findOne('999')).rejects.toThrow(
+                'Sport not found',
+            );
+            expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({
+                id: '999',
+            });
+        });
 
-			await expect(service.findOne("999")).rejects.toThrow('Sport not found');
-			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({ id: "999" })
-		});
+        it('Should return a sport', async () => {
+            const sport = { id: '1', name: 'Kendo' };
+            mockSportRepository.findOneBy.mockResolvedValue(sport);
 
-		it("Should return a sport", async () => {
-			const sport = {id : "1", name : "Kendo"}
-			mockSportRepository.findOneBy.mockResolvedValue(sport);
+            const result = await service.findOne('1');
+            expect(result).toEqual({ id: '1', name: 'Kendo' });
+            expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({
+                id: '1',
+            });
+        });
+    });
 
-			const result = await service.findOne("1");
-			expect(result).toEqual({id : "1", name : "Kendo"});
-			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({id : "1"});
-		});
-	})
+    describe('Scenario : Add a sport', () => {
+        it('Should add a new sport', async () => {
+            const sportDto = { name: 'Karate' };
+            const sport = { id: '1234-5678-9012-3456', ...sportDto };
+            mockSportRepository.findOneBy.mockResolvedValue(null);
+            mockSportRepository.save.mockResolvedValue(sport);
 
-	describe("Scenario : Add a sport", () => {
-		it("Should add a new sport", async () => {
-			const sportDto = {name : "Karate"};
-			const sport = {id : "1234-5678-9012-3456", ...sportDto};
-			mockSportRepository.findOneBy.mockResolvedValue(null);
-			mockSportRepository.save.mockResolvedValue(sport);
-			
-			const result = await service.create(sportDto);
-			console.log("result : ", result);
-			expect(result).toEqual(sport);
-			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({name : "Karate"});
-			expect(mockSportRepository.save).toHaveBeenCalledWith(expect.objectContaining({
-				id : "1234-5678-9012-3456",
-				name : "Karate"
-			}));
-		})
+            const result = await service.create(sportDto);
+            expect(result).toEqual(sport);
+            expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({
+                name: 'Karate',
+            });
+            expect(mockSportRepository.save).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    id: '1234-5678-9012-3456',
+                    name: 'Karate',
+                }),
+            );
+        });
 
-		it("Should fail to add a new sport", async () => {
-			const sportDto = {name : "Kendo"};
-			const sport = {id : "1234-5678-9012-3456", ...sportDto};
-			mockSportRepository.findOneBy.mockResolvedValue(sport);
-			mockSportRepository.save.mockResolvedValue(null);
+        it('Should fail to add a new sport', async () => {
+            const sportDto = { name: 'Kendo' };
+            const sport = { id: '1234-5678-9012-3456', ...sportDto };
+            mockSportRepository.findOneBy.mockResolvedValue(sport);
+            mockSportRepository.save.mockResolvedValue(null);
 
-			await expect(service.create(sportDto)).rejects.toThrow("Sport already exist");
-			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith(sportDto);
-		})
-	})
+            await expect(service.create(sportDto)).rejects.toThrow(
+                'Sport already exist',
+            );
+            expect(mockSportRepository.findOneBy).toHaveBeenCalledWith(
+                sportDto,
+            );
+        });
+    });
 
-	describe("Scenario : Update a sport", () => {
-		it("Should update a sport", async () => {
-			const oldSport = {id : "1234-5678-9012-3456", name: "Kendo"};
-			const newName = "Iaido";
-			const updatedSport = {id : "1234-5678-9012-3456", name: "Iaido"}
-			mockSportRepository.findOneBy.mockResolvedValue(oldSport);
-			mockSportRepository.save.mockResolvedValue(updatedSport);
+    describe('Scenario : Update a sport', () => {
+        it('Should update a sport', async () => {
+            const oldSport = { id: '1234-5678-9012-3456', name: 'Kendo' };
+            const newName = 'Iaido';
+            const updatedSport = { id: '1234-5678-9012-3456', name: 'Iaido' };
+            mockSportRepository.findOneBy.mockResolvedValue(oldSport);
+            mockSportRepository.save.mockResolvedValue(updatedSport);
 
+            const result = await service.update(oldSport.id, newName);
+            expect(result).toEqual(updatedSport);
+            expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({
+                id: '1234-5678-9012-3456',
+            });
+            expect(mockSportRepository.save).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    id: '1234-5678-9012-3456',
+                    name: 'Iaido',
+                }),
+            );
+            expect(mockSportRepository.findOneBy).toHaveBeenCalledTimes(2);
+        });
 
-			const result = await service.update(oldSport.id, newName);
-			expect(result).toEqual(updatedSport);
-			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({id: "1234-5678-9012-3456"});
-			// expect(mockSportRepository.update).toHaveBeenCalledWith(oldSport.id, expect.objectContaining({
-			// 	name : "Iaido"
-			// }));
-			expect(mockSportRepository.save).toHaveBeenCalledWith(expect.objectContaining({
-				id: "1234-5678-9012-3456",
-				name: "Iaido"
-			}));
-			expect(mockSportRepository.findOneBy).toHaveBeenCalledTimes(2);
-		})
+        it('Should fail to update a new sport', async () => {
+            mockSportRepository.findOneBy = jest.fn().mockResolvedValue(null);
 
-		it("Should fail to update a new sport", async () => {
-			mockSportRepository.findOneBy = jest.fn().mockResolvedValue(null);
+            await expect(service.findOne('999')).rejects.toThrow(
+                'Sport not found',
+            );
+            expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({
+                id: '999',
+            });
+        });
+    });
 
-			await expect(service.findOne("999")).rejects.toThrow('Sport not found');
-			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({ id: "999" })
-		})
-	})
+    describe('Scenario : Remove a sport', () => {
+        it('Should remove a sport', async () => {
+            const sport = { id: '1234-5678-9012-3456', name: 'Kendo' };
+            mockSportRepository.findOneBy.mockResolvedValue({ id: sport.id });
+            mockSportRepository.remove.mockResolvedValue(sport);
 
-	describe("Scenario : Remove a sport", () => {
-		it("Should remove a sport", async () => {
-			const sport = {id : "1234-5678-9012-3456", name : "Kendo"};
-			mockSportRepository.findOneBy.mockResolvedValue({id: sport.id});
-			mockSportRepository.remove.mockResolvedValue(sport);
+            const result = await service.remove(sport.id);
+            expect(result).toEqual(sport);
+            expect(mockSportRepository.remove).toHaveBeenCalledWith({
+                id: sport.id,
+            });
+            expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({
+                id: sport.id,
+            });
+        });
 
-			const result = await service.remove(sport.id);
-			expect(result).toEqual(sport);
-			expect(mockSportRepository.remove).toHaveBeenCalledWith({id: sport.id});
-			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({id: sport.id});
-		})
+        it('Should fail to remove a sport', async () => {
+            mockSportRepository.findOneBy = jest.fn().mockResolvedValue(null);
 
-		it("Should fail to remove a sport", async () => {
-			mockSportRepository.findOneBy = jest.fn().mockResolvedValue(null);
-
-			await expect(service.findOne("999")).rejects.toThrow("Sport not found");
-			expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({id: "999"})
-		})
-	})
+            await expect(service.findOne('999')).rejects.toThrow(
+                'Sport not found',
+            );
+            expect(mockSportRepository.findOneBy).toHaveBeenCalledWith({
+                id: '999',
+            });
+        });
+    });
 });

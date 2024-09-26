@@ -4,10 +4,10 @@ import { Customer } from '../entities/customer.entity';
 
 @Injectable()
 export class UpdateCustomer {
-  constructor(
-    @Inject('RANK_REPOSITORY')
-    private customerRepository: Repository<Customer>,
-  ) {}
+    constructor(
+        @Inject('RANK_REPOSITORY')
+        private customerRepository: Repository<Customer>,
+    ) {}
 
-  async execute() {}
+    async execute() {}
 }
