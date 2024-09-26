@@ -4,12 +4,12 @@ import { Customer } from '../entities/customer.entity';
 
 @Injectable()
 export class FindCustomers {
-  constructor(
-    @Inject('RANK_REPOSITORY')
-    private customerRepository: Repository<Customer>,
-  ) {}
+    constructor(
+        @Inject('RANK_REPOSITORY')
+        private customerRepository: Repository<Customer>,
+    ) {}
 
-  async execute() {
-    return await this.customerRepository.find();
-  }
+    async execute() {
+        return await this.customerRepository.find();
+    }
 }

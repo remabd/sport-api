@@ -6,12 +6,12 @@ import { v4 } from 'uuid';
 
 @Injectable()
 export class FindAllRanks {
-  constructor(
-    @Inject('RANK_REPOSITORY')
-    private rankRepository: Repository<Rank>,
-  ) {}
+    constructor(
+        @Inject('RANK_REPOSITORY')
+        private rankRepository: Repository<Rank>,
+    ) {}
 
-  async execute() {
-    return await this.rankRepository.find();
-  }
+    async execute() {
+        return await this.rankRepository.find();
+    }
 }
